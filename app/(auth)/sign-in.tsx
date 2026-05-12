@@ -43,7 +43,7 @@ export default function SignInScreen() {
 
             {/* Sign In button */}
             <View className="mt-6">
-              <AuthButton title="Sign In" onPress={() => {}} />
+              <AuthButton title="Sign In" onPress={() => router.replace('/(home)')} />
             </View>
 
             {/* OR divider */}
