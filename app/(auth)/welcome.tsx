@@ -5,6 +5,7 @@ import AuthButton from '@/components/auth/AuthButton';
 import AuthInput from '@/components/auth/AuthInput';
 import Logo from '@/components/auth/Logo';
 import OrDivider from '@/components/auth/OrDivider';
+import SocialButton from '@/components/auth/SocialButton';
 import { router } from 'expo-router';
 
 export default function WelcomeScreen() {
@@ -44,11 +45,15 @@ export default function WelcomeScreen() {
 
             {/* Proceed button */}
             <View className="mt-6">
-              <AuthButton title="Proceed" onPress={() => {}} />
+              <AuthButton title="Proceed" onPress={() => router.replace('/(home)')} />
             </View>
 
             {/* OR divider */}
             <OrDivider />
+
+            {/* Social login */}
+            <SocialButton provider="google" onPress={() => {}} />
+            <SocialButton provider="facebook" onPress={() => {}} />
 
             {/* Register link */}
             <Text className="text-center mt-5 text-gray-500">
