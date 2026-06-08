@@ -1,0 +1,87 @@
+graph TB
+    subgraph "Framework Layer"
+        EXPO["Expo / React Native"]
+        ROUTER["Expo Router<br/>(Drawer Navigation)"]
+    end
+
+    subgraph "Context Providers"
+        TP["ThemeProvider<br/>(light / dark / system)"]
+        HP["HistoryProvider<br/>(search history stack)"]
+    end
+
+    subgraph "Navigation"
+        DRAWER["CustomDrawerContent<br/>- Search History List<br/>- Clear History Button<br/>- Theme Toggle"]
+    end
+
+    subgraph "Screens"
+        DICT["DictionaryScreen<br/>(app/index.tsx)"]
+    end
+
+    subgraph "UI Components"
+        LANDING["LandingState<br/>(Welcome + Sample Words)"]
+        LOADING["LoadingState<br/>(Spinner)"]
+        WORD["WordEntry<br/>(Word + Phonetics + Audio Controls<br/>+ Meanings + Synonyms + Antonyms)"]
+        NF["NotFoundState<br/>(404 + Suggestions)"]
+        NETERR["NetworkErrorState<br/>(Offline + Retry)"]
+    end
+
+    subgraph "Services & Libraries"
+        AXIOS["Axios<br/>(HTTP Client)"]
+        EXPOAV["expo-av<br/>(Audio.Sound)"]
+        ASYNC["AsyncStorage<br/>(Persistence)"]
+    end
+
+    subgraph "External APIs"
+        API["Free Dictionary API<br/>dictionaryapi.dev/api/v2/entries/en"]
+        AUDIOCDN["Audio CDN<br/>(Pronunciation MP3s)"]
+    end
+
+    subgraph "Type Definitions"
+        TYPES["types/dictionary.ts<br/>WordData, Meaning,<br/>Definition, Phonetic"]
+    end
+
+    EXPO --> ROUTER
+    ROUTER --> TP
+    TP --> HP
+    HP --> DRAWER
+    HP --> DICT
+
+    DICT --> LANDING
+    DICT --> LOADING
+    DICT --> WORD
+    DICT --> NF
+    DICT --> NETERR
+
+    DICT -->|"GET /entries/en/{word}"| AXIOS
+    AXIOS -->|"HTTP Request"| API
+    API -->|"JSON Response"| AXIOS
+
+    DICT -->|"playAudio / pauseAudio<br/>resumeAudio / stopAudio"| EXPOAV
+    EXPOAV -->|"Stream Audio"| AUDIOCDN
+
+    HP -->|"Read/Write History"| ASYNC
+    TP -->|"Read/Write Theme"| ASYNC
+
+    DRAWER -->|"onHistoryPress(word)"| DICT
+    WORD -->|"onSearchWord(synonym)"| DICT
+
+    TYPES -.->|"used by"| DICT
+    TYPES -.->|"used by"| WORD
+
+    style EXPO fill:#4f46e5,color:#fff
+    style ROUTER fill:#4f46e5,color:#fff
+    style TP fill:#7c3aed,color:#fff
+    style HP fill:#7c3aed,color:#fff
+    style DICT fill:#0891b2,color:#fff
+    style DRAWER fill:#0891b2,color:#fff
+    style LANDING fill:#059669,color:#fff
+    style LOADING fill:#059669,color:#fff
+    style WORD fill:#059669,color:#fff
+    style NF fill:#059669,color:#fff
+    style NETERR fill:#059669,color:#fff
+    style AXIOS fill:#ea580c,color:#fff
+    style EXPOAV fill:#ea580c,color:#fff
+    style ASYNC fill:#ea580c,color:#fff
+    style API fill:#dc2626,color:#fff
+    style AUDIOCDN fill:#dc2626,color:#fff
+    style TYPES fill:#6b7280,color:#fff

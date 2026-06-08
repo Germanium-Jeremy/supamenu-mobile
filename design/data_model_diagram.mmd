@@ -1,0 +1,29 @@
+classDiagram
+    class WordData {
+        +string word
+        +Phonetic[] phonetics
+        +Meaning[] meanings
+    }
+
+    class Phonetic {
+        +string? text
+        +string? audio
+    }
+
+    class Meaning {
+        +string partOfSpeech
+        +Definition[] definitions
+        +string[]? synonyms
+        +string[]? antonyms
+    }
+
+    class Definition {
+        +string definition
+        +string? example
+        +string[]? synonyms
+        +string[]? antonyms
+    }
+
+    WordData "1" --> "*" Phonetic
+    WordData "1" --> "*" Meaning
+    Meaning "1" --> "*" Definition

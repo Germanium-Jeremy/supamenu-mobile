@@ -1,0 +1,151 @@
+flowchart TD
+    USER(["👤 User"])
+
+    subgraph "User Input"
+        SEARCH_INPUT["Type word in<br/>TextInput"]
+        SUBMIT["Press Search Button<br/>or Submit"]
+        DRAWER_TAP["Tap word from<br/>Drawer History"]
+        SYNONYM_TAP["Tap synonym /<br/>antonym link"]
+        SAMPLE_TAP["Tap sample word<br/>from Landing"]
+    end
+
+    subgraph "Input Validation"
+        VALIDATE{"Is input<br/>empty?"}
+        ALERT_EMPTY["Alert: Please enter<br/>a word to search"]
+        TRIM["Trim & Lowercase<br/>input"]
+    end
+
+    subgraph "API Layer"
+        SET_LOADING["Set loading = true<br/>Clear previous data"]
+        API_CALL["Axios GET Request<br/>dictionaryapi.dev/api/v2<br/>/entries/en/{word}"]
+        API_RESPONSE{"Response<br/>Status?"}
+    end
+
+    subgraph "State Management"
+        SET_DATA["setData(response.data)<br/>WordData[]"]
+        SET_404["setErrorType: 404<br/>setNotFoundWord"]
+        SET_NETWORK["setErrorType: network"]
+        ADD_HISTORY["addWordToHistory(word)<br/>→ AsyncStorage"]
+    end
+
+    subgraph "UI Rendering"
+        RENDER_LOADING["LoadingState<br/>⏳ Spinner"]
+        RENDER_RESULTS["WordEntry Component<br/>📖 Word + Phonetics<br/>+ Meanings"]
+        RENDER_404["NotFoundState<br/>❌ Word Not Found<br/>+ Suggestions"]
+        RENDER_NETWORK["NetworkErrorState<br/>📡 Connection Error<br/>+ Retry Button"]
+        RENDER_LANDING["LandingState<br/>🏠 Welcome<br/>+ Sample Words"]
+    end
+
+    subgraph "Audio Playback"
+        HAS_AUDIO{"Audio URL<br/>exists?"}
+        SHOW_PLAY["Show 🔊 Play Button"]
+        PLAY["playAudio(url)<br/>createAsync + playAsync"]
+        PLAYING_STATE["State: Playing<br/>Show ⏸ Pause + ⏹ Stop"]
+        PAUSE["pauseAsync()<br/>State: Paused"]
+        PAUSED_STATE["State: Paused<br/>Show ▶ Resume + ⏹ Stop"]
+        RESUME["playAsync()<br/>State: Playing"]
+        STOP["stopAsync() +<br/>unloadAsync()<br/>State: Idle"]
+        FINISHED["Audio finished<br/>naturally → Idle"]
+        AUDIO_ERROR["Alert: Playback Error"]
+    end
+
+    subgraph "History & Persistence"
+        LOAD_HISTORY["Load history from<br/>AsyncStorage on mount"]
+        DISPLAY_HISTORY["Display in<br/>CustomDrawerContent"]
+        CLEAR_HISTORY["clearHistory()<br/>→ AsyncStorage.remove"]
+    end
+
+    subgraph "Theme System"
+        LOAD_THEME["Load theme from<br/>AsyncStorage on mount"]
+        TOGGLE_THEME["toggleTheme()<br/>light ↔ dark"]
+        APPLY_THEME["Apply via NativeWind<br/>colorScheme.set()"]
+        PERSIST_THEME["Save to AsyncStorage"]
+    end
+
+    %% User interactions
+    USER --> SEARCH_INPUT
+    USER --> DRAWER_TAP
+    USER --> SYNONYM_TAP
+    USER --> SAMPLE_TAP
+    SEARCH_INPUT --> SUBMIT
+
+    %% All entry points converge to validation
+    SUBMIT --> VALIDATE
+    DRAWER_TAP --> TRIM
+    SYNONYM_TAP --> TRIM
+    SAMPLE_TAP --> TRIM
+
+    VALIDATE -->|"Yes"| ALERT_EMPTY
+    VALIDATE -->|"No"| TRIM
+
+    %% API flow
+    TRIM --> SET_LOADING
+    SET_LOADING --> API_CALL
+    SET_LOADING --> RENDER_LOADING
+
+    API_CALL --> API_RESPONSE
+    API_RESPONSE -->|"200 OK"| SET_DATA
+    API_RESPONSE -->|"404"| SET_404
+    API_RESPONSE -->|"Network Error"| SET_NETWORK
+
+    %% Success path
+    SET_DATA --> ADD_HISTORY
+    SET_DATA --> RENDER_RESULTS
+    ADD_HISTORY --> DISPLAY_HISTORY
+
+    %% Error paths
+    SET_404 --> RENDER_404
+    SET_NETWORK --> RENDER_NETWORK
+
+    %% Audio flow
+    RENDER_RESULTS --> HAS_AUDIO
+    HAS_AUDIO -->|"Yes"| SHOW_PLAY
+    HAS_AUDIO -->|"No"| RENDER_RESULTS
+
+    SHOW_PLAY -->|"Tap Play"| PLAY
+    PLAY -->|"Success"| PLAYING_STATE
+    PLAY -->|"Error"| AUDIO_ERROR
+
+    PLAYING_STATE -->|"Tap Pause"| PAUSE
+    PLAYING_STATE -->|"Tap Stop"| STOP
+    PLAYING_STATE -->|"Finishes"| FINISHED
+
+    PAUSE --> PAUSED_STATE
+    PAUSED_STATE -->|"Tap Resume"| RESUME
+    PAUSED_STATE -->|"Tap Stop"| STOP
+    RESUME --> PLAYING_STATE
+
+    STOP --> SHOW_PLAY
+    FINISHED --> SHOW_PLAY
+
+    %% History on mount
+    LOAD_HISTORY --> DISPLAY_HISTORY
+
+    %% Theme flow
+    LOAD_THEME --> APPLY_THEME
+    USER -->|"Toggle in Drawer"| TOGGLE_THEME
+    TOGGLE_THEME --> APPLY_THEME
+    TOGGLE_THEME --> PERSIST_THEME
+
+    %% Retry
+    RENDER_NETWORK -->|"Tap Retry"| SET_LOADING
+    RENDER_404 -->|"Tap Suggestion"| TRIM
+
+    %% No data state
+    RENDER_LANDING -->|"No search yet"| SAMPLE_TAP
+
+    %% Styling
+    style USER fill:#4f46e5,color:#fff
+    style API_CALL fill:#dc2626,color:#fff
+    style API_RESPONSE fill:#ea580c,color:#fff
+    style SET_DATA fill:#059669,color:#fff
+    style SET_404 fill:#f43f5e,color:#fff
+    style SET_NETWORK fill:#d97706,color:#fff
+    style RENDER_RESULTS fill:#059669,color:#fff
+    style RENDER_404 fill:#f43f5e,color:#fff
+    style RENDER_NETWORK fill:#d97706,color:#fff
+    style RENDER_LANDING fill:#6366f1,color:#fff
+    style RENDER_LOADING fill:#8b5cf6,color:#fff
+    style PLAYING_STATE fill:#059669,color:#fff
+    style PAUSED_STATE fill:#f59e0b,color:#fff
+    style ADD_HISTORY fill:#7c3aed,color:#fff
