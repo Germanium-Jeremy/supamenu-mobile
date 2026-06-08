@@ -1,8 +1,12 @@
 import "@/global.css";
 import FontAwesome from '@expo/vector-icons/FontAwesome';
-import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
+import { DarkTheme, DefaultTheme, ThemeProvider as NavThemeProvider } from '@react-navigation/native';
 import { useFonts } from 'expo-font';
-import { Stack } from 'expo-router';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { Drawer } from 'expo-router/drawer';
+import { HistoryProvider } from '@/context/HistoryContext';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
+import CustomDrawerContent from '@/components/CustomDrawerContent';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import 'react-native-reanimated';
@@ -15,7 +19,7 @@ export {
 } from 'expo-router';
 
 export const unstable_settings = {
-  initialRouteName: '(auth)',
+  initialRouteName: 'index',
 };
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
@@ -42,18 +46,37 @@ export default function RootLayout() {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <ThemeProvider>
+      <RootLayoutNav />
+    </ThemeProvider>
+  );
 }
 
 function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+  const { isDark } = useTheme();
 
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(home)" options={{ headerShown: false }} />
-      </Stack>
-    </ThemeProvider>
+    <HistoryProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <NavThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+          <Drawer
+            drawerContent={(props) => <CustomDrawerContent {...props} />}
+            screenOptions={{
+              headerShown: false,
+              drawerType: 'front',
+            }}
+          >
+            <Drawer.Screen
+              name="index"
+              options={{
+                drawerLabel: 'Home',
+                title: 'LexiDict',
+              }}
+            />
+          </Drawer>
+        </NavThemeProvider>
+      </GestureHandlerRootView>
+    </HistoryProvider>
   );
 }
