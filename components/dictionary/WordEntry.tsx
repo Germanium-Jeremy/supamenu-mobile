@@ -1,36 +1,73 @@
-import React from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
-import { MaterialIcons } from '@expo/vector-icons';
 import { WordData } from '@/types/dictionary';
+import { MaterialIcons } from '@expo/vector-icons';
+import React from 'react';
+import { Text, TouchableOpacity, View } from 'react-native';
 
 interface WordEntryProps {
   entry: WordData;
   index: number;
   onPlayAudio: (url: string) => void;
+  onPauseAudio: () => void;
+  onResumeAudio: () => void;
+  onStopAudio: () => void;
   onSearchWord: (word: string) => void;
+  audioState: 'idle' | 'playing' | 'paused';
+  currentAudioUrl: string | null;
 }
 
-const WordEntry = ({ entry, index, onPlayAudio, onSearchWord }: WordEntryProps) => {
+const WordEntry = ({ entry, index, onPlayAudio, onPauseAudio, onResumeAudio, onStopAudio, onSearchWord, audioState, currentAudioUrl }: WordEntryProps) => {
   const phoneticText = entry.phonetics.find(p => p.text)?.text;
   const audioUrl = entry.phonetics.find(p => p.audio)?.audio;
+  const isThisActive = currentAudioUrl === audioUrl && audioState !== 'idle';
+  const isThisPlaying = currentAudioUrl === audioUrl && audioState === 'playing';
+  const isThisPaused = currentAudioUrl === audioUrl && audioState === 'paused';
 
   return (
     <View className={index > 0 ? "mt-8 border-t-2 border-gray-200 dark:border-gray-800 pt-8" : ""}>
       {/* Word Heading */}
       <View className="flex-row items-center justify-between mb-4">
         <View>
-          <Text className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 capitalize">{entry.word}</Text>
+          <Text className="text-4xl font-extrabold text-gray-900 dark:text-gray-100 capitalize max-w-[20rem]">{entry.word}</Text>
           {phoneticText && (
             <Text className="text-indigo-600 dark:text-indigo-400 text-lg mt-1">{phoneticText}</Text>
           )}
         </View>
         {audioUrl && (
-          <TouchableOpacity 
-            onPress={() => onPlayAudio(audioUrl)}
-            className="bg-indigo-100 dark:bg-indigo-900/50 p-4 rounded-full"
-          >
-            <MaterialIcons name="volume-up" size={30} color="#4f46e5" />
-          </TouchableOpacity>
+          <View className="flex-row items-center gap-2">
+            {/* Play / Pause / Resume button */}
+            {isThisPlaying ? (
+              <TouchableOpacity
+                onPress={onPauseAudio}
+                className="bg-amber-100 dark:bg-amber-900/50 p-4 rounded-full"
+              >
+                <MaterialIcons name="pause" size={30} color="#f59e0b" />
+              </TouchableOpacity>
+            ) : isThisPaused ? (
+              <TouchableOpacity
+                onPress={onResumeAudio}
+                className="bg-emerald-100 dark:bg-emerald-900/50 p-4 rounded-full"
+              >
+                <MaterialIcons name="play-arrow" size={30} color="#10b981" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity
+                onPress={() => onPlayAudio(audioUrl)}
+                className="bg-indigo-100 dark:bg-indigo-900/50 p-4 rounded-full"
+              >
+                <MaterialIcons name="volume-up" size={30} color="#4f46e5" />
+              </TouchableOpacity>
+            )}
+
+            {/* Stop button — only visible when audio is active */}
+            {isThisActive && (
+              <TouchableOpacity
+                onPress={onStopAudio}
+                className="bg-red-100 dark:bg-red-900/50 p-3 rounded-full"
+              >
+                <MaterialIcons name="stop" size={24} color="#ef4444" />
+              </TouchableOpacity>
+            )}
+          </View>
         )}
       </View>
 
@@ -41,7 +78,7 @@ const WordEntry = ({ entry, index, onPlayAudio, onSearchWord }: WordEntryProps) 
             <Text className="text-indigo-600 dark:text-indigo-400 font-bold italic text-lg">{meaning.partOfSpeech}</Text>
             <View className="flex-1 h-[1px] bg-gray-200 dark:bg-gray-800 ml-4" />
           </View>
-          
+
           {meaning.definitions.map((def, dIdx) => (
             <View key={dIdx} className="mb-4">
               <View className="flex-row">
@@ -83,8 +120,8 @@ const WordEntry = ({ entry, index, onPlayAudio, onSearchWord }: WordEntryProps) 
               <Text className="text-gray-600 dark:text-gray-400 font-bold mb-1">Synonyms</Text>
               <View className="flex-row flex-wrap">
                 {meaning.synonyms.map((syn, sIdx) => (
-                  <TouchableOpacity 
-                    key={sIdx} 
+                  <TouchableOpacity
+                    key={sIdx}
                     onPress={() => onSearchWord(syn)}
                     className="bg-indigo-50 dark:bg-indigo-900/50 px-2 py-1 rounded-md mr-2 mb-2"
                   >
@@ -100,8 +137,8 @@ const WordEntry = ({ entry, index, onPlayAudio, onSearchWord }: WordEntryProps) 
               <Text className="text-gray-600 dark:text-gray-400 font-bold mb-1">Antonyms</Text>
               <View className="flex-row flex-wrap">
                 {meaning.antonyms.map((ant, aIdx) => (
-                  <TouchableOpacity 
-                    key={aIdx} 
+                  <TouchableOpacity
+                    key={aIdx}
                     onPress={() => onSearchWord(ant)}
                     className="bg-rose-50 dark:bg-rose-900/50 px-2 py-1 rounded-md mr-2 mb-2"
                   >

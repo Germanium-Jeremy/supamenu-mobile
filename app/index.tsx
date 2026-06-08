@@ -26,6 +26,8 @@ export default function DictionaryScreen() {
   const [notFoundWord, setNotFoundWord] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [sound, setSound] = useState<Audio.Sound | null>(null);
+  const [audioState, setAudioState] = useState<'idle' | 'playing' | 'paused'>('idle');
+  const [currentAudioUrl, setCurrentAudioUrl] = useState<string | null>(null);
   const { addWordToHistory } = useHistory();
   const navigation = useNavigation<DrawerNavigationProp<any>>();
 
@@ -75,14 +77,69 @@ export default function DictionaryScreen() {
 
   const playAudio = async (url: string) => {
     try {
+      // If there's an existing sound, clean it up first
       if (sound) {
+        await sound.stopAsync();
         await sound.unloadAsync();
+        setSound(null);
       }
+
       const { sound: newSound } = await Audio.Sound.createAsync({ uri: url });
       setSound(newSound);
+      setCurrentAudioUrl(url);
+      setAudioState('playing');
+
+      // Reset state when playback finishes naturally
+      newSound.setOnPlaybackStatusUpdate((status) => {
+        if (status.isLoaded && status.didJustFinish) {
+          setAudioState('idle');
+          setCurrentAudioUrl(null);
+          newSound.unloadAsync();
+          setSound(null);
+        }
+      });
+
       await newSound.playAsync();
     } catch (error) {
+      setAudioState('idle');
+      setCurrentAudioUrl(null);
       Alert.alert('Playback Error', 'Could not play pronunciation audio.');
+    }
+  };
+
+  const pauseAudio = async () => {
+    try {
+      if (sound) {
+        await sound.pauseAsync();
+        setAudioState('paused');
+      }
+    } catch (error) {
+      Alert.alert('Playback Error', 'Could not pause audio.');
+    }
+  };
+
+  const resumeAudio = async () => {
+    try {
+      if (sound) {
+        await sound.playAsync();
+        setAudioState('playing');
+      }
+    } catch (error) {
+      Alert.alert('Playback Error', 'Could not resume audio.');
+    }
+  };
+
+  const stopAudio = async () => {
+    try {
+      if (sound) {
+        await sound.stopAsync();
+        await sound.unloadAsync();
+        setSound(null);
+      }
+      setAudioState('idle');
+      setCurrentAudioUrl(null);
+    } catch (error) {
+      Alert.alert('Playback Error', 'Could not stop audio.');
     }
   };
 
@@ -142,7 +199,12 @@ export default function DictionaryScreen() {
                 entry={entry}
                 index={eIdx}
                 onPlayAudio={playAudio}
+                onPauseAudio={pauseAudio}
+                onResumeAudio={resumeAudio}
+                onStopAudio={stopAudio}
                 onSearchWord={handleSelectWord}
+                audioState={audioState}
+                currentAudioUrl={currentAudioUrl}
               />
             ))}
           </View>

@@ -1,2 +1,3 @@
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 netsh interface ipv4 show address
+eas build --platform mobile --profile development
